@@ -1,0 +1,142 @@
+Arduino Code
+/*****************
+This program reads
+******************/
+#include <IRremote.h>
+int RECV_PIN = 3; //IR receiver
+#define motor11 9 //Right Motor
+#define motor12 8
+#define motor21 12 //Left Motor
+#define motor22 13
+#define enable11 10 //Right Motor enable
+#define enable22 11 //Left Motor enable
+ IRrecv irrecv(RECV_PIN);
+decode_results results;
+ long Previous_Signal,No_Button_Is_Pressed=0;
+void Scan_IRSignal(void);
+29
+void Reverse(void); // Reverse()
+void Right(void); //Right() Direction
+void Left(void); //Left() Direction
+void Forward(void); //Forward() Direction
+void Disable_Motor(void);
+void Enable_Motor(void);
+ void setup()
+{
+ Serial.begin(115200);
+ irrecv.enableIRIn(); // Start the receiver
+ Serial.println(" Press buttons ");
+}
+void loop()
+{
+Scan_IRSignal();
+No_Button_Is_Pressed++;
+}
+void Enable_Motor(void)
+{
+ digitalWrite(enable11, HIGH);
+ digitalWrite(enable22, HIGH);
+}
+void Disable_Motor(void)
+{
+ digitalWrite(enable11, LOW);
+ digitalWrite(enable22, LOW);
+}
+void Forward(void) //Forward() Direction
+{
+ digitalWrite(motor11, HIGH);
+ digitalWrite(motor12, LOW);
+30
+ digitalWrite(motor21, LOW);
+ digitalWrite(motor22, HIGH);
+}
+void Left(void) //Left() Direction
+{
+ digitalWrite(motor11, LOW);
+ digitalWrite(motor12, HIGH);
+ digitalWrite(motor21, LOW);
+ digitalWrite(motor22, HIGH);
+}
+void Right(void) //Right() Direction
+{
+ digitalWrite(motor11, HIGH);
+ digitalWrite(motor12, LOW);
+ digitalWrite(motor21, HIGH);
+ digitalWrite(motor22, LOW);
+}
+void Reverse(void) // Reverse()
+{
+ digitalWrite(motor11, LOW);
+ digitalWrite(motor12, HIGH);
+ digitalWrite(motor21, HIGH);
+ digitalWrite(motor22, LOW);
+}
+void Scan_IRSignal(void)
+{
+ if(irrecv.decode(&results))
+ {
+31
+ results.value=results.value 225;
+ Serial.println(results.value);
+ No_Button_Is_Pressed =0;
+ if ((results.value)==74293)
+ {
+ Enable_Motor();
+ Reverse();
+ Previous_Signal=results.value;
+ }
+
+ else if ((results.value)==74377)
+ {
+ Enable_Motor();
+ Forward();
+ Previous_Signal=results.value;
+ }
+ else if ((results.value)==74302)
+ {
+ Enable_Motor();
+ Right();
+ Previous_Signal=results.value;
+ }
+ else if ((results.value)==74359)
+ {
+ Enable_Motor();
+ Left();
+ Previous_Signal=results.value;
+ }
+ else if (Previous_Signal==74359 && (results.value)==19088743)
+ {
+ Enable_Motor();
+32
+ Left();
+ }
+ else if (Previous_Signal==74302 && (results.value)==19088743)
+ {
+ Enable_Motor();
+ Right();
+ }else if (Previous_Signal==74293 &&(results.value)==19088743)
+ {
+ Enable_Motor();
+ Reverse();
+ }
+ else if (Previous_Signal==74377 && (results.value)==19088743)
+ {
+ Enable_Motor();
+ Forward();
+ }
+ else
+ {
+ Disable_Motor();
+ }
+ irrecv.resume(); // Receive the next value
+ Serial.print("Read Signal ");
+ Serial.println(Previous_Signal);
+ }
+
+ if(No_Button_Is_Pressed > 30000)
+ {
+ Previous_Signal=0;
+ Disable_Motor();
+ No_Button_Is_Pressed = 31000;
+ }
+}
